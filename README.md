@@ -3,7 +3,7 @@
 Using face-api.js for detecting faces and opencv.js for other vision related tasks
 
 
-#Run in Live Server
+# Run in Live Server
 
 In your VSCode, open your project.
 
