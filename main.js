@@ -2,7 +2,7 @@
 const imageUpload = document.getElementById('imageUpload')
 const video = document.getElementById('videoElement')
 
-let dst = new cv.Mat();
+// let dst = new cv.Mat();
 
 Promise.all([
   faceapi.nets.tinyFaceDetector.loadFromUri('/weights'),
