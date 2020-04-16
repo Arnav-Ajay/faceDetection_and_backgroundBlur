@@ -1,53 +1,87 @@
+// In this case, We set width 320, and the height will be computed based on the input stream.
+let width = 320;
+let height = 0;
 
-const imageUpload = document.getElementById('imageUpload')
-const video = document.getElementById('videoElement')
+// whether streaming video from the camera.
+let streaming = false;
 
-// let dst = new cv.Mat();
+let video = document.getElementById("video");
+let blurButton = document.getElementById("blur");
+let stream = null;
+let vc = null;
+
+let src = null;
+let dst = null;
 
 Promise.all([
   faceapi.nets.tinyFaceDetector.loadFromUri('/weights'),
   faceapi.nets.faceLandmark68Net.loadFromUri('/weights'),
   faceapi.nets.faceRecognitionNet.loadFromUri('/weights'),
   faceapi.nets.faceExpressionNet.loadFromUri('/weights')
-]).then(start)
+]).then(startCamera)
 
-async function start(){
-  navigator.getUserMedia(
-      { video: {} },
-      stream => video.srcObject = stream,
-      err => console.error(err)
-  );
+function startCamera() {
+  if (streaming) return;
+  navigator.mediaDevices.getUserMedia({video: true, audio: false})
+    .then(function(s) {
+    stream = s;
+    video.srcObject = s;
+    video.play();
+  })
+    .catch(function(err) {
+    console.log("An error occured! " + err);
+  });
+
+  video.addEventListener("canplay", function(ev){
+    if (!streaming) {
+      height = video.videoHeight / (video.videoWidth/width);
+      video.setAttribute("width", width);
+      video.setAttribute("height", height);
+      streaming = true;
+      vc = new cv.VideoCapture(video);
+    }
+    startVideoProcessing();
+
+    const canvas =  document.getElementById('canvasOutput') 
+    this.canvas = faceapi.createCanvasFromMedia(video);
+  
+    const displaySize = { width: video.width, height: video.height }
+    faceapi.matchDimensions(canvas, displaySize);
+  
+    setInterval(async () => {
+        const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceExpressions()
+        const resizedDetections = faceapi.resizeResults(detections, displaySize);
+  
+        console.log(detections[0]['detection']['box']['_x']);
+        console.log(detections[0]['detection']['box']['_y']);
+        console.log(detections[0]['detection']['box']['_width']);
+        console.log(detections[0]['detection']['box']['_height']);
+        
+        canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+  
+        faceapi.draw.drawDetections(canvas, resizedDetections);
+        face_landmarks = faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
+        faceapi.draw.drawFaceExpressions(canvas, resizedDetections);
+  
+    }, 100)
+  }, false);
+
+  blurButton.addEventListener("click", function(ev){
+    vc.read(src);
+    let result = gaussianBlur(src);
+
+    cv.imshow("canvasOutput", result);
+  }, false);
 
 }
 
-video.addEventListener('play', () => {
-  const canvas = faceapi.createCanvasFromMedia(video);
-  document.body.append(canvas);
+function startVideoProcessing() {
+  if (!streaming) { console.warn("Please startup your webcam"); return; }
+  src = new cv.Mat(height, width, cv.CV_8UC4);
+  dst = new cv.Mat(height, width, cv.CV_8UC4);
+}
 
-  const displaySize = { width: video.width, height: video.height }
-  faceapi.matchDimensions(canvas, displaySize);
-
-
-  setInterval(async () => {
-      const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceExpressions()
-      const resizedDetections = faceapi.resizeResults(detections, displaySize);
-
-      canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
-
-      faceapi.draw.drawDetections(canvas, resizedDetections);
-      face_landmarks = faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
-      faceapi.draw.drawFaceExpressions(canvas, resizedDetections);
-
-
-      // let src = cv.imread(canvas);
-      // let dst = new cv.Mat();
-      // let ksize = new cv.Size(9, 9);
-      // let anchor = new cv.Point(-1, -1);
-      // var t = cv.blur(src, dst, ksize);
-      // cv.imshow('canvasOutput', dst);
-      // src.delete(); 
-      // dst.delete();
-
-  }, 100)
-
-})
+function gaussianBlur(src) {
+  cv.GaussianBlur(src, dst, {width: 39, height: 39}, 0, 0, cv.BORDER_DEFAULT);
+  return dst;
+}
