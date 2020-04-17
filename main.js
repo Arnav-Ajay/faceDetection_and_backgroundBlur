@@ -1,14 +1,14 @@
-// In this case, We set width 320, and the height will be computed based on the input stream.
+let video = document.getElementById("video");
+let blurButton = document.getElementById("blur");
+
 let width = 320;
 let height = 0;
 
 // whether streaming video from the camera.
 let streaming = false;
-
-let video = document.getElementById("video");
-let blurButton = document.getElementById("blur");
 let stream = null;
 let vc = null;
+let isBlurred = false;
 
 let src = null;
 let dst = null;
@@ -40,7 +40,6 @@ function startCamera() {
       streaming = true;
       vc = new cv.VideoCapture(video);
     }
-    startVideoProcessing();
 
     const canvas =  document.getElementById('canvasOutput') 
     this.canvas = faceapi.createCanvasFromMedia(video);
@@ -67,21 +66,34 @@ function startCamera() {
   }, false);
 
   blurButton.addEventListener("click", function(ev){
-    vc.read(src);
-    let result = gaussianBlur(src);
 
-    cv.imshow("canvasOutput", result);
+    if (!streaming) { console.warn("Please startup your webcam"); return; }
+    
+    src = new cv.Mat(height, width, cv.CV_8UC4);
+    dst = new cv.Mat(height, width, cv.CV_8UC4);
+
+    if(isBlurred == false) {
+      requestAnimationFrame(blurBackground);
+      isBlurred = true;
+    } else {
+      requestAnimationFrame(unBlurBackground);
+      isBlurred = false;
+    }
   }, false);
-
 }
 
-function startVideoProcessing() {
-  if (!streaming) { console.warn("Please startup your webcam"); return; }
-  src = new cv.Mat(height, width, cv.CV_8UC4);
-  dst = new cv.Mat(height, width, cv.CV_8UC4);
-}
-
-function gaussianBlur(src) {
+function blurBackground() {
+  vc.read(src);
   cv.GaussianBlur(src, dst, {width: 39, height: 39}, 0, 0, cv.BORDER_DEFAULT);
-  return dst;
+
+  cv.imshow("canvasOutput", dst);
+  requestAnimationFrame(blurBackground);
+}
+
+function unBlurBackground() {
+  vc.read(src);
+  cv.GaussianBlur(src, dst, {width: 1, height: 1}, 0, 0, cv.BORDER_DEFAULT);
+
+  cv.imshow("canvasOutput", dst);
+  requestAnimationFrame(unBlurBackground);
 }
