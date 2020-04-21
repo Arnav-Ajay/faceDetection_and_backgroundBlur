@@ -5,40 +5,56 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <script defer src="face-api.min.js"></script>
-  <script defer src="main.js"></script>
   <script defer src="opencv.js"></script>
+  <script defer src="seriously.js"></script>
+  <script src="effects/seriously.blur.js"></script>
+  <script defer src="main.js"></script>
+
   <title>Face Detection with Blackground Blur Effect</title>
   <style>
-    body {
+    /* body {
       margin: 0;
       padding: 0;
       width: 100vw;
       height: 100vh;
       display: flex;
       flex-direction: column
-    }
-
-    canvas {
-      position: absolute;
-      top: 0;
-      left: 0;
+    } */
+    canvas{
       border: 1px solid black;
     }
 
-    .center-block {
+    /* #canvasOutput {
+      position: absolute;
+      top: 0;
+      left: 0;
+    } */
+
+    /* .center-block {
       display: block;
       margin: auto;
-}
+    }
+
+    #c1{
+      position: absolute;;
+      top: 240;
+      left: 0;
+    }
+    #c2{
+      position: absolute;;
+      top: 480;
+      left: 320;
+    } */
 
   </style>
 </head>
 <body>
   <video id="video" class="hidden" autoplay="true" id="video">Your browser does not support the video tag.</video>
-  <!-- <video width="720" height="560" autoplay="true" id="videoElement"></video> -->
-  <canvas class="center-block" id="canvasOutput" width=320 height=240></canvas>
+  <canvas id="canvasOutput" width=320 height=240></canvas>
+  <canvas id="faceOutput" width=320 height=240></canvas>
+
   <div>
     <button id="blur">Blur Background</button>
   </div>
-
 </body>
 </html>
